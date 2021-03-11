@@ -1,5 +1,12 @@
+import 'package:dartz/dartz.dart' as dartz;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:xfer/xfer.dart';
 
+Map<String, String> get kinveyPostHeaders => {
+      'Content-Type': 'application/json',
+      'Authorization': 'Basic c3RldmVuLnNtaXRoOkZIQ1AyMDIwIQ==',
+    };
 void main() {
   runApp(MyApp());
 }
@@ -26,6 +33,15 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  String caption = 'Waiting...';
+  Xfer? xfer;
+
+  @override
+  void initState() {
+    super.initState();
+    xfer = Xfer(httpPostFunction: http.post);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,15 +56,26 @@ class _MyHomePageState extends State<MyHomePage> {
               'Generic header',
             ),
             Text(
-              'Text without context',
+              '$caption',
               style: Theme.of(context).textTheme.headline4,
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        tooltip: 'Increment',
+        onPressed: () async {
+          final String url = 'https://jsonplaceholder.typicode.com/todos';
+          //final String url = 'https://baas.kinvey.com/rpc/kid_rk7CWpu8w/custom/getSurvey?surveyKey=1';
+          final dartz.Either<XferFailure, XferResponse> result = await xfer!.post(url, headers: kinveyPostHeaders);
+          setState(() {
+            result.fold(
+              (failure) => caption = '${failure.toString()}',
+              (response) => caption = '${response.toString()}',
+            );
+          });
+          debugPrint('$result');
+        },
+        tooltip: 'Post',
         child: Icon(Icons.add),
       ),
     );
